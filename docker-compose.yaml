@@ -1,0 +1,19 @@
+networks:
+  tgbot-net:
+volumes:
+  tg_base_data:
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: tgbot_go_data_base
+    restart: always
+    environment:
+      POSTGRES_USER: stepan
+      POSTGRES_PASSWORD: ivanenko
+      POSTGRES_DB: stepanDB
+    volumes:
+      - tg_base_data:/var/lib/postgresql/data
+    ports:
+      - '5446:5432'
+    networks:
+      - tgbot-net       

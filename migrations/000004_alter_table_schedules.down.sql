@@ -1,0 +1,3 @@
+ALTER TABLE schedules DROP COLUMN IF EXISTS day_of_week;
+
+ALTER TABLE schedules ADD COLUMN date DATE NOT NULL;

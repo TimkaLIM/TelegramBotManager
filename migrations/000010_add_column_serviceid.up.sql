@@ -1,0 +1,2 @@
+ALTER TABLE bookings
+ADD COLUMN service_id INT REFERENCES services(id) ON DELETE SET NULL;

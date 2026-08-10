@@ -1,0 +1,6 @@
+.env
+*.exe
+credentials.json
+pgdata/
+migrate.exe
+.idea

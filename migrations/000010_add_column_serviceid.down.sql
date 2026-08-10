@@ -1,0 +1,2 @@
+ALTER TABLE bookings 
+DROP COLUMN IF EXISTS service_id;
