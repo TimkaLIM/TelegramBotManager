@@ -4,17 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
 
-const SpreadsheetID = "1S4_4JmcsO0ozoj5KkeoXAum68VM9DOH7ouh_6du4drw"
+var SpreadsheetID = os.Getenv("SPREADSHEET_ID")
 
 func AppendBookingToSheet(dateStr, timeStr, serviceTitle, userName, status string) error {
 	ctx := context.Background()
 
-	srv, err := sheets.NewService(ctx, option.WithCredentialsFile("credentials.json"))
+	googleFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(googleFile))
 	if err != nil {
 		log.Println("Ошибка инициализации Google Sheets: ", err)
 		return err
