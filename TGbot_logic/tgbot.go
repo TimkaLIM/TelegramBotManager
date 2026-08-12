@@ -470,7 +470,21 @@ func TGbot_start(db *sql.DB) {
 					log.Println("Ошибка отмены записи", err)
 				} else {
 					bot.Send(msg)
+
+					go func() {
+						userNick := update.CallbackQuery.From.UserName
+						if userNick != "" {
+							userNick = "@" + userNick
+						} else {
+							userNick = update.CallbackQuery.From.FirstName
+						}
+						cancelErr := base.CancelBookingToSheet(booking_date, booking_time, userNick)
+						if cancelErr != nil {
+							log.Println("⚠️ [ФОН] Не удалось отменить запись в Google Таблице:", cancelErr)
+						}
+					}()
 				}
+
 			case callbackData == "price_list":
 				bot.Request(tgbotapi.NewCallback(CallbackID, ""))
 
