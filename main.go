@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,11 @@ import (
 	"github.com/joho/godotenv"
 
 	tg "db_train33/TGbot_logic"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 type Config struct {
@@ -21,6 +27,30 @@ type Config struct {
 	User     string
 	Password string
 	DBName   string
+}
+
+func RunMigrations(db *sql.DB) {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatalf("❌ Ошибка создания драйвера миграций: %v", err)
+	}
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://migrations",
+		"postgres",
+		driver)
+	if err != nil {
+		log.Fatalf("❌ Ошибка инициализации мигратора: %v", err)
+	}
+	err = m.Up()
+	if err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("✅ База данных в актуальном состоянии (миграции не требуются)")
+		} else {
+			log.Fatalf("Ошибка выполнения миграции!", err)
+		}
+	} else {
+		fmt.Println("🚀 Миграции базы данных успешно применены!")
+	}
 }
 
 func main() {
@@ -51,6 +81,8 @@ func main() {
 	}
 
 	fmt.Println("Код подключен к базе")
+
+	RunMigrations(db)
 
 	tg.TGbot_start(db)
 }
