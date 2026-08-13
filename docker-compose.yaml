@@ -16,4 +16,25 @@ services:
     ports:
       - '5446:5432'
     networks:
-      - tgbot-net       
+      - tgbot-net   
+  tor:
+    image: osminogin/tor-simple
+    container_name: tgbot_tor_proxy
+    restart: always
+    networks:
+      - tgbot-net
+  app:
+    build: .
+    container_name: tgbot_app
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - TELEGRAM_PROXY=socks5://tor:9050
+    depends_on:
+      - db
+      - tor
+    networks:
+      - tgbot-net                  
