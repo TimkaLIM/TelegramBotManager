@@ -3,6 +3,8 @@ package TGbot_logic
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -37,6 +39,7 @@ func SendAdminMenu(bot *tgbotapi.BotAPI, chatID int64, AdminKeyboard tgbotapi.In
 }
 
 func TGbot_start(db *sql.DB) {
+
 	//BLOCK 1
 	_ = godotenv.Load()
 
@@ -86,10 +89,37 @@ func TGbot_start(db *sql.DB) {
 
 	//BLOCK2
 
-	bot, err := tgbotapi.NewBotAPI(adminInfo.token)
-	if err != nil {
-		log.Panic("Не удалось запустить бота", err)
+	proxyStr := os.Getenv("TELEGRAM_PROXY")
+	var bot *tgbotapi.BotAPI
+
+	if proxyStr == "" {
+		log.Println("🚀 ЗАПУСК бота: НАПРЯМУЮ (без прокси)")
+		var err error
+		bot, err = tgbotapi.NewBotAPI(adminInfo.token)
+		if err != nil {
+			log.Fatal("❌ Ошибка запуска бота без прокси:", err)
+		}
+	} else {
+		fmt.Printf("🌐 Подключение к Telegram API: ЧЕРЕЗ ПРОКСИ (%s)\n", proxyStr)
+		ProxyURL, err := url.Parse(proxyStr)
+		if err != nil {
+			log.Fatal("❌ Ошибка перевода прокси в URL:", err)
+		}
+
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(ProxyURL),
+		}
+		httpClient := &http.Client{Transport: transport}
+
+		bot, err = tgbotapi.NewBotAPIWithClient(adminInfo.token, tgbotapi.APIEndpoint, httpClient)
+		if err != nil {
+			log.Fatal("❌ Не удалось запустить бота через прокси:", err)
+		}
 	}
+
+	fmt.Printf("✅ Бот успешно авторизован! Учетная запись: @%s\n", bot.Self.UserName)
+
+	var err error
 	u := tgbotapi.NewUpdate(0)
 	Updates := bot.GetUpdatesChan(u)
 
@@ -102,7 +132,7 @@ func TGbot_start(db *sql.DB) {
 			if update.Message.IsCommand() {
 				switch update.Message.Command() {
 				case "start":
-					_, err = db.Exec("INSERT INTO users (id,name) VALUES($1,$2) ON CONFLICT (id) DO NOTHING", userID, UserName)
+					_, err := db.Exec("INSERT INTO users (id,name) VALUES($1,$2) ON CONFLICT (id) DO NOTHING", userID, UserName)
 					if err != nil {
 						log.Println("Ошибка добавления юзера", err)
 					}

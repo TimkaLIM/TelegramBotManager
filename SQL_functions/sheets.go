@@ -10,10 +10,11 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-var SpreadsheetID = os.Getenv("SPREADSHEET_ID")
-
 func CancelBookingToSheet(dateStr, timeStr, userNick string) error {
 	ctx := context.Background()
+
+	var SpreadsheetID = os.Getenv("SPREADSHEET_ID")
+
 	googleFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(googleFile))
@@ -40,7 +41,7 @@ func CancelBookingToSheet(dateStr, timeStr, userNick string) error {
 		if len(rowTime) >= 5 {
 			rowTime = rowTime[:5]
 		}
-		rowNick := fmt.Sprintf("%v", row[4])
+		rowNick := fmt.Sprintf("%v", row[3])
 
 		if rowDate == dateStr && rowTime == timeStr && rowNick == userNick {
 			targetRowIndex = i + 1
@@ -52,7 +53,7 @@ func CancelBookingToSheet(dateStr, timeStr, userNick string) error {
 		log.Printf("⚠️ Запись для отмены не найдена в Google Таблице (Дата: %s, Время: %s, Ник: %s)", dateStr, timeStr, userNick)
 		return fmt.Errorf("запись не найдена")
 	}
-	updateRange := fmt.Sprintf("Лист1!F%d", targetRowIndex)
+	updateRange := fmt.Sprintf("Лист1!E%d", targetRowIndex)
 
 	valueRange := &sheets.ValueRange{
 		Values: [][]interface{}{{"cancel"}},
@@ -65,20 +66,22 @@ func CancelBookingToSheet(dateStr, timeStr, userNick string) error {
 		log.Println("❌ Ошибка обновления статуса в Google Таблице:", err)
 		return err
 	}
-	log.Printf("✅ Запись на строке %d успешно переведена в статус 'cancelled'!", targetRowIndex)
+	fmt.Printf("✅ Запись на строке %d успешно переведена в статус 'cancelled'!", targetRowIndex)
 	return nil
 }
 
 func AppendBookingToSheet(dateStr, timeStr, serviceTitle, userName, status string) error {
 	ctx := context.Background()
 
+	var SpreadsheetID = os.Getenv("SPREADSHEET_ID")
 	googleFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
 	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(googleFile))
 	if err != nil {
 		log.Println("Ошибка инициализации Google Sheets: ", err)
 		return err
 	}
-	rangeName := "Лист1!A:F"
+	rangeName := "Лист1!A:E"
 	row := []interface{}{
 		dateStr,
 		timeStr,
