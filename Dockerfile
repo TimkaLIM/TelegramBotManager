@@ -1,5 +1,7 @@
 FROM golang:1.25-alpine AS builder
 
+ENV GOPROXY=https://goproxy.io,direct
+
 RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
@@ -9,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO-ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o bot main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o bot main.go
 
 FROM alpine:latest
 
